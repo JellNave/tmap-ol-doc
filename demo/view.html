@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../css/ol.css" />
+    <script src="../js/ol.js"></script>
+    <script src="../js/mapConfig.js"></script>
+    <title>Document</title>
+  </head>
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+    }
+    #mapContainer1 {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+    .buttons {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+    }
+    .buttons button {
+      background: #fff;
+      outline: none;
+      border: 1px solid #666666;
+      color: #333333;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .view-btns {
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      transform: translateX(-50%);
+    }
+    .view-btns > div {
+      width: 20px;
+      height: 20px;
+      text-align: center;
+      line-height: 20px;
+      margin: 5px;
+      background-color: #fff;
+      border: 1px solid #666666;
+      cursor: pointer;
+    }
+  </style>
+  <body>
+    <div id="mapContainer1"></div>
+    <div class="buttons">
+      <button id="setMapView">改变视图</button>
+      <button id="animateMapView">动画移动视图</button>
+      <button id="reset">复原</button>
+      <button id="fitPoints">撒点并适应显示</button>
+      <button id="fitGeos">区域上图并适应显示</button>
+    </div>
+    <div class="view-btns">
+      <div id="zoomIn">+</div>
+      <div id="zoomOut">-</div>
+    </div>
+  </body>
+  <script type="module">
+    // #region init
+    import {
+      initMap,
+      getMapView,
+      setMapVIew,
+      animateMapView,
+      zoomIn,
+      zoomOut,
+      getMapViewCoord,
+      fitInView,
+      getCoordinatesExtent,
+      addIconMarkers,
+      removeLayer,
+      addDrawLayer,
+      addWKTGeoOnSource,
+      fitInFeaturesOrGeometries,
+      getDistance,
+      getGeoCenterFromLngLats,
+      getMetersPerUnit,
+    } from "../js/TMap.js";
+    const option = {
+      targetContainerId: "mapContainer1",
+      centerLng: 104.076693,
+      centerLat: 30.513315,
+      zoom: 13,
+      baseMap: "vector",
+    };
+    const { TMap, baseLayer } = initMap(option);
+    //#endregion init
+
+    console.log("当前视图对象：", getMapView(TMap));
+    //改变中心点与缩放
+    document.getElementById("setMapView").onclick = () => {
+      setMapVIew(TMap, { zoom: 8, center: [103.043, 31.012312] });
+    };
+
+    document.getElementById("animateMapView").onclick = () => {
+      animateMapView(TMap, {
+        zoom: 8,
+        center: [103.043, 31.012312],
+        durationTime: 3000,
+      });
+    };
+
+    // 放大
+    document.getElementById("zoomIn").onclick = () => {
+      zoomIn(TMap);
+    };
+    // 缩小
+    document.getElementById("zoomOut").onclick = () => {
+      zoomOut(TMap);
+    };
+
+    console.log("当前地图视口：", getMapViewCoord(TMap));
+
+    const { extent } = getMapViewCoord(TMap);
+    //复原
+    document.getElementById("reset").onclick = () => {
+      fitInView(TMap, extent, { padding: [0, 0, 0, 0] });
+    };
+
+    const points = [
+      { lng: 103.02, lat: 31.11 },
+      { lng: 103.54, lat: 31.01 },
+    ];
+    console.log("点位extent:", getCoordinatesExtent(points));
+    //撒点
+    let layer;
+    document.getElementById("fitPoints").onclick = () => {
+      layer && removeLayer(TMap, layer);
+      layer = addIconMarkers(TMap, points);
+      const coordsObj = getCoordinatesExtent(points);
+      fitInView(TMap, coordsObj.extent);
+      // fitInView(TMap, coordsObj.geom);
+    };
+
+    //区域上图适应显示
+    let areaLayer;
+    document.getElementById("fitGeos").onclick = () => {
+      areaLayer && removeLayer(TMap, areaLayer);
+      const { drawSource, drawLayer } = addDrawLayer(TMap);
+      areaLayer = drawLayer;
+      const arr = [
+        {
+          WKT: "POLYGON((104.054595 30.544729,104.042064 30.514688,104.090301 30.489626,104.128066 30.533743,104.100257 30.543356,104.054595 30.544729))",
+        },
+        {
+          radius: 0.04223358312131609,
+          WKT: "POINT(104.1061769104004 30.723644180297853)",
+        },
+      ];
+      const features = [];
+      arr.forEach((item) => {
+        const feature = addWKTGeoOnSource(drawSource, item.WKT, item.radius);
+        features.push(feature);
+      });
+      fitInFeaturesOrGeometries(TMap, features);
+    };
+
+    console.log(
+      "两点距离为：",
+      getDistance(
+        {
+          lng: 104.06,
+          lat: 30.67,
+        },
+        {
+          lng: 104.063,
+          lat: 30.672,
+        }
+      )
+    );
+
+    console.log(
+      "坐标中心点为",
+      getGeoCenterFromLngLats([
+        { lng: 104.054595, lat: 30.544729 },
+        { lng: 104.042064, lat: 30.514688 },
+        { lng: 104.090301, lat: 30.489626 },
+        { lng: 104.100257, lat: 30.543356 },
+        { lng: 104.054595, lat: 30.544729 },
+      ])
+    );
+
+    console.log("1投影单位的米长", getMetersPerUnit(TMap));
+  </script>
+</html>

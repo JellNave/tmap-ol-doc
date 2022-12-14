@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../css/ol.css" />
+    <script src="../js/ol.js"></script>
+    <script src="../js/mapConfig.js"></script>
+    <title>Document</title>
+  </head>
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+    }
+    #mapContainer {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    .buttons {
+      position: fixed;
+      right: 50%;
+      bottom: 0;
+      transform: translateX(50%);
+    }
+    .buttons button {
+      background: #fff;
+      outline: none;
+      border: 1px solid #666666;
+      color: #333333;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+  </style>
+  <body>
+    <div id="mapContainer"></div>
+    <div class="buttons">
+      <button id="iconMarkers">普通标记点/清除</button>
+      <button id="overlayerMarkers">覆盖物标记点/清除</button>
+      <button id="textMarks">文字标记/清除</button>
+      <!-- <button id="darkBtn">图标嵌套文字标记点/清除</button>
+      <button id="addControlBtn">添加/删除一个全屏组件</button> -->
+    </div>
+  </body>
+  <script type="module">
+    import {
+      initMap,
+      addIconMarkers,
+      removeLayer,
+      getCoordinatesExtent,
+      fitInView,
+      animateMapView,
+      addOverLayMarkers,
+      removeOverlay,
+      getAllLayers,
+      getAllOverlays,
+      removeFeaturesOnSource,
+      addTextOnSource,
+      addVectorLayer,
+      removeFeaturesOnLayer,
+    } from "../js/TMap.js";
+    const option = {
+      targetContainerId: "mapContainer",
+      centerLng: 104.076693,
+      centerLat: 30.513315,
+      zoom: 13,
+      baseMap: "vector",
+    };
+    const { TMap, baseLayer } = initMap(option);
+
+    // 普通标记点 撒点及清除
+    const icon = new Image();
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="none" d="M0 0h24v24H0z"/><path d="M18.364 17.364L12 23.728l-6.364-6.364a9 9 0 1 1 12.728 0zM12 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0-2a2 2 0 1 1 0-4 2 2 0 0 1 0 4z" fill="rgba(47,204,113,1)"/></svg>';
+    icon.src = "data:image/svg+xml," + encodeURI(svg);
+    const normalMarkerList = [
+      { lng: 104.076693, lat: 30.513315 },
+      {
+        lng: 104.076693,
+        lat: 30.523315,
+        src: "../img/logo.png",
+        showWidth: 24,
+      },
+      {
+        lng: 104.086693,
+        lat: 30.503315,
+        img: icon,
+        imgSize: [24, 24],
+      },
+    ];
+    let add = true;
+    let markerLayer;
+    document.getElementById("iconMarkers").onclick = () => {
+      if (add) {
+        markerLayer = addIconMarkers(TMap, normalMarkerList);
+        const coordsObj = getCoordinatesExtent(normalMarkerList);
+        fitInView(TMap, coordsObj.extent);
+      } else {
+        console.log("清除前地图所有层", getAllLayers(TMap));
+        removeLayer(TMap, markerLayer);
+        animateMapView(TMap, { zoom: 13, center: [104.076693, 30.513315] });
+      }
+      add = !add;
+    };
+
+    // 覆盖物标记点 撒点及清除
+    const overlayMarkerList = [
+      {
+        lng: 104.076693,
+        lat: 30.513315,
+        elementHtml: '<div style="color:red;">123456<div>',
+      },
+      {
+        lng: 104.076693,
+        lat: 30.523315,
+        elementHtml:
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="none" d="M0 0h24v24H0z"/><path d="M18.364 17.364L12 23.728l-6.364-6.364a9 9 0 1 1 12.728 0zM12 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0-2a2 2 0 1 1 0-4 2 2 0 0 1 0 4z" fill="rgba(47,204,113,1)"/></svg>',
+      },
+      {
+        lng: 104.086693,
+        lat: 30.503315,
+        elementHtml:
+          '<div style="width:60px;height:60px;background:yellow;display:flex;justify-content: center;align-items: center;"><img src="../img/logo.png"/></div>',
+      },
+    ];
+    let addOverlay = true;
+    let overlays = [];
+    document.getElementById("overlayerMarkers").onclick = () => {
+      if (addOverlay) {
+        overlays = addOverLayMarkers(TMap, overlayMarkerList);
+        const coordsObj = getCoordinatesExtent(overlayMarkerList);
+        fitInView(TMap, coordsObj.extent);
+      } else {
+        console.log("清除前地图所有覆盖物", getAllOverlays(TMap));
+        overlays.forEach((overlay) => {
+          removeOverlay(TMap, overlay);
+        });
+        animateMapView(TMap, { zoom: 13, center: [104.076693, 30.513315] });
+      }
+      addOverlay = !addOverlay;
+    };
+
+    //文字标注上图及清除
+    const textObj = addVectorLayer(TMap);
+    const textLayer = textObj.vectorLayer;
+    const textSource = textObj.vectorSource;
+    const textList = [
+      { lng: 104.076693, lat: 30.513315, text: "文字1", textColor: "red" },
+      {
+        lng: 104.076693,
+        lat: 30.523315,
+        text: "文字2",
+        textColor: "#57e6e6",
+        font: "bold 30px '华文彩云','serif'",
+      },
+      {
+        lng: 104.086693,
+        lat: 30.503315,
+        text: "文字3",
+        textBackground: "#fff",
+        borderColor: "#000",
+        borderWidth: 2,
+      },
+    ];
+    let addText = true;
+    let textFeatures = [];
+    document.getElementById("textMarks").onclick = () => {
+      if (addText) {
+        textFeatures = [];
+        textList.forEach((text) => {
+          const textFeature = addTextOnSource(textSource, text);
+          textFeatures.push(textFeature);
+        });
+        const coordsObj = getCoordinatesExtent(textList);
+        fitInView(TMap, coordsObj.extent);
+      } else {
+        removeFeaturesOnSource(textSource, textFeatures);
+        // removeFeaturesOnLayer(textLayer, textFeatures);
+        animateMapView(TMap, { zoom: 13, center: [104.076693, 30.513315] });
+      }
+      addText = !addText;
+    };
+    // removeLayer(TMap, textLayer);
+  </script>
+</html>
