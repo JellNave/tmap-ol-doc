@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../css/ol.css" />
+    <script src="../js/ol.js"></script>
+    <script src="../js/mapConfig.js"></script>
+    <title>Document</title>
+  </head>
+  <style>
+    body {
+      padding: 0;
+      margin: 0;
+    }
+    #mapContainer1 {
+      width: 100vw;
+      height: 50vh;
+      position: relative;
+    }
+    #mapContainer2 {
+      width: 100vw;
+      height: 50vh;
+      position: relative;
+    }
+    .inner-text {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      top: 50%;
+      left: 50%;
+    }
+    .buttons {
+      position: fixed;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    .buttons button {
+      background: #fff;
+      outline: none;
+      border: 1px solid #666666;
+      color: #333333;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+  </style>
+  <body>
+    <div id="mapContainer1"><span class="inner-text">容器1</span></div>
+    <div id="mapContainer2"><span class="inner-text">容器2</span></div>
+    <div class="buttons">
+      <button id="setContainerBtn">改变地图容器</button>
+      <button id="vectorBtn">矢量地图</button>
+      <button id="imageBtn">影像地图</button>
+      <button id="darkBtn">夜景地图</button>
+      <button id="addControlBtn">添加/删除一个全屏组件</button>
+    </div>
+  </body>
+  <script type="module">
+    // #region init
+    import {
+      initMap,
+      setMapContainer,
+      setBaseMap,
+      addMapControl,
+      getMapControls,
+      removeMapControl,
+    } from "../js/TMap.js";
+    const option = {
+      targetContainerId: "mapContainer1",
+      centerLng: 104.076693,
+      centerLat: 30.513315,
+      zoom: 13,
+      minZoom: 10,
+      maxZoom: 16,
+      // baseMap: "dark",
+      controls: ["Zoom", "OverviewMap"],
+      isAllowMouseWheelZoom: false,
+      isAllowDoubleClickZoom: false,
+    };
+    const { TMap, baseLayer } = initMap(option);
+    //#endregion init
+
+    // #region changeContainer
+    let container = "mapContainer1";
+    document.getElementById("setContainerBtn").onclick = () => {
+      container =
+        container === "mapContainer1" ? "mapContainer2" : "mapContainer1";
+      setMapContainer(TMap, container);
+    };
+    //#endregion changeContainer
+
+    // 矢量地图按钮
+    document.getElementById("vectorBtn").onclick = () => {
+      setBaseMap(baseLayer, "vector");
+    };
+    // 影像地图按钮
+    document.getElementById("imageBtn").onclick = () => {
+      setBaseMap(baseLayer, "image");
+    };
+    //夜景地图按钮
+    document.getElementById("darkBtn").onclick = () => {
+      setBaseMap(baseLayer, "dark");
+    };
+
+    //添加/删除全屏组件按钮
+    let control;
+    document.getElementById("addControlBtn").onclick = () => {
+      if (control) {
+        removeMapControl(TMap, control);
+        control = undefined;
+      } else {
+        control = addMapControl(TMap, "FullScreen");
+      }
+    };
+  </script>
+</html>
